@@ -15,8 +15,7 @@ const MindWave = require('mindwave');
 const ThinkGear = require('node-thinkgear-sockets');
 
 var tgc = ThinkGear.createClient({
-    enableRawOutput: true,
-    blinkStrength: true
+    
 })
 
 var sample_data = {
@@ -47,12 +46,14 @@ function createWindow () {
   // Create the browser window.
   mainWindow = new BrowserWindow({width: 800, height: 600})
   mainWindow.setFullScreen(true);
-  // tgc.connect();
+  try{
+    tgc.connect();
+  }catch(e){
+    console.log('connect error', e);
+  }
+  
 
-  // tgc.on('data', function(data){
-  //     console.log('tgc', data);
-  // })
-
+  
 
   // and load the index.html of the app.
   mainWindow.loadURL(url.format({
@@ -74,16 +75,37 @@ function createWindow () {
   })
 
   ipcMain.once('get-plot-data', function(event, data){
+    try{
+        tgc.on('data', function(data){
+          console.log('tgc', data);
+          sample_data = data
+          if(sample_data.poorSignalLevel < 60){
+            
+          }else{
+            sample_data.eegPower.delta = 0;
+            sample_data.eegPower.theta = 0;
+            sample_data.eegPower.highAlpha = 0;
+            sample_data.eegPower.lowAlpha = 0;
+            sample_data.eegPower.lowBeta = 0;
+            sample_data.eegPower.highBeta = 0;
+            sample_data.eegPower.lowGamma = 0;
+            sample_data.eegPower.highGamma = 0;
+          }
 
-    setInterval(function(){
-      sample_data = data_generator();
-      event.sender.send('plot-data', sample_data);
-    }, 200);
+          event.sender.send('plot-data', sample_data);
+          
+      })
+    }catch(e){
+      console.log('tgc error', e);
+    }
+    // setInterval(function(){
+      
+    // }, 200);
     
   })
 
   mainWindow.webContents.send('plot-data', sample_data);
-  console.log(sample_data);
+  // console.log(sample_data);
 }
 
 // This method will be called when Electron has finished
