@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Plot</title>
+</head>
+<body>
+    <div id="plot" style="height:100%; width:100%"></div>
+    <hr>
+    <div style="display: inline-flex">
+        <div style="align-items: flex-start">
+                <strong>Delta</strong> : <span id="delta"></span> | &nbsp;
+        </div>
+        <div style="align-items: center">
+                <strong>Theta</strong> : <span id="theta"></span> | &nbsp;
+        </div>
+        <div style="align-items: flex-end">
+                <strong>High Alpha</strong> : <span id="highAlpha"></span>
+        </div>
+        
+        
+        
+    </div>
+    <hr>
+    <div>
+        <button onclick="plus()">Plus</button>
+        <button onclick="minus()">Minus</button>
+    </div>
+    <hr>
+</body>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+
+
+    const ipcRenderer = require('electron').ipcRenderer;
+    var plot = document.getElementById('plot');
+    var delta = document.getElementById('delta');
+    var theta = document.getElementById('theta');
+    var highAlpha = document.getElementById('highAlpha');
+
+    var interval = 20;
+
+    plus = function(){
+        interval += 5;
+    }
+
+    minus = function(){
+        interval -= 5;
+    }
+
+    var d3 = Plotly.d3;
+
+    var WIDTH_IN_PERCENT_OF_PARENT = 60,
+        HEIGHT_IN_PERCENT_OF_PARENT = 80;
+
+    var gd3 = d3.select('body')
+        .append('div')
+        .style({
+            width: '90%',
+            'margin-left': '5%',
+
+            height: HEIGHT_IN_PERCENT_OF_PARENT + 'vh',
+            'margin-top': (100 - HEIGHT_IN_PERCENT_OF_PARENT) / 2 + 'vh'
+        });
+
+    var gd = gd3.node();
+    plot = gd;
+
+
+    var time = new Date();
+
+    var deltaTrace = {
+        x: [time],
+        y: [0],
+        mode: 'lines',
+        name: 'Delta',
+        line: {color: '#800AF6'}
+        };
+    
+    var thetaTrace = {
+        x: [time],
+        y: [0],
+        mode: 'lines',
+        name: 'Theta',
+        line: {color: '#80FA06'}
+        }
+
+    var highAlphaTrace = {
+        x: [time],
+        y: [0],
+        mode: 'lines',
+        name: 'High Alpha',
+        line: {color: '#F58306'}
+        }
+
+    var data = [deltaTrace, thetaTrace, highAlphaTrace]
+
+        Plotly.plot(plot, data);
+
+        var cnt = 0;
+
+    ipcRenderer.on('plot-data', function(event, sample_data){
+
+        // var data = [
+        //     {
+        //     x: ["delta", "theta", "lowAlpha", "highAlpha", "lowBeta", "highBeta", "lowGamma", "highGamma"],
+        //     y: [
+        //         sample_data['eegPower']['delta'],
+        //         sample_data['eegPower']['theta'],
+        //         sample_data['eegPower']['lowAlpha'],
+        //         sample_data['eegPower']['highAlpha'],
+        //         sample_data['eegPower']['lowBeta'],
+        //         sample_data['eegPower']['highBeta'],
+        //         sample_data['eegPower']['lowGamma'],
+        //         sample_data['eegPower']['highGamma']
+        //     ],
+        //     type: "bar"
+        //     }
+        // ];
+
+        // var deltaTrace = {
+        //     name : 'delta',
+        //     x : [],
+        //     y : []
+        // }
+
+        var time = new Date();
+
+        var update = {
+            x:  [[time], [time], [time]],
+            y: [[sample_data['eegPower']['delta']], [sample_data['eegPower']['theta']], [sample_data['eegPower']['highAlpha']]]
+        }
+
+        delta.textContent = sample_data['eegPower']['delta'].toFixed(10);
+        theta.textContent = sample_data['eegPower']['theta'].toFixed(10);
+        highAlpha.textContent = sample_data['eegPower']['highAlpha'].toFixed(10);
+
+        var olderTime = time.setSeconds(time.getSeconds() - interval);
+        var futureTime = time.setSeconds(time.getSeconds() + interval);
+
+        var minuteView = {
+                xaxis: {
+                type: 'date',
+                range: [olderTime, futureTime]
+                }
+            };
+
+        
+
+        Plotly.relayout(plot, minuteView);
+        Plotly.extendTraces(plot, update, [0, 1, 2])
+    })
+
+    ipcRenderer.send('get-plot-data', 'ping');
+
+    
+</script>
+
+</html>

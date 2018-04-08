@@ -1,0 +1,25 @@
+{
+  "name": "mindwavex",
+  "version": "1.0.0",
+  "description": "IoT with mindwave",
+  "main": "index.js",
+  "scripts": {
+    "test": "electron ."
+  },
+  "keywords": [
+    "mindwave",
+    "IoT"
+  ],
+  "author": "Suyog Gadhave",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^1.8.3",
+    "electron-rebuild": "^1.7.3"
+  },
+  "dependencies": {
+    "mindwave": "0.0.4",
+    "node-thinkgear-sockets": "0.0.1",
+    "plotly": "^1.0.6",
+    "serialport": "^6.1.0"
+  }
+}
